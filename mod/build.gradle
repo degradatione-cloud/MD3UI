@@ -1,10 +1,14 @@
 plugins {
-    id 'fabric-loom'
+    // The current Fabric plugin id. The old `fabric-loom` coordinates are
+    // superseded; `fabric-loom-remap` is what the official template uses for
+    // 1.21.4 onward, and older Loom releases cannot read Fabric API artefacts
+    // built with 1.13+.
+    id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
 }
 
 // Target version is injected by CI so one source tree builds all eight jars:
 //   ./gradlew :mod:build -Pmc=1.21.11
-// Defaults keep a plain `./gradlew build` working for contributors.
+// Defaults keep a plain `./gradlew :mod:build` working for contributors.
 def mcVersion = project.findProperty('mc') ?: '1.21.11'
 def versions = new groovy.json.JsonSlurper().parse(
         rootProject.file('versions.json')) as Map
@@ -13,30 +17,32 @@ if (!versions.containsKey(mcVersion)) {
     throw new GradleException("Unsupported -Pmc=${mcVersion}. " +
             "Known: ${versions.keySet().join(', ')}")
 }
-def v = versions[mcVersion]
+def target = versions[mcVersion]
 
-archivesBaseName = "md3ui"
+base {
+    archivesName = 'md3ui'
+}
 version = "${rootProject.version}+${mcVersion}"
 
 dependencies {
     minecraft "com.mojang:minecraft:${mcVersion}"
 
-    // Official Mojang mappings, not Yarn, and this is a deliberate choice:
-    // the handful of API members MD3UI touches (GuiGraphics.fill, drawString,
-    // enableScissor, AbstractWidget.getX/getWidth/visible) keep identical names
-    // in official mappings across 1.21.4 -> 1.21.11, whereas Yarn renames
-    // members between snapshots. One source tree therefore compiles for every
-    // target with no per-version source sets.
+    // Official Mojang mappings, not Yarn, and this is deliberate: the handful of
+    // API members MD3UI touches (GuiGraphics.fill/drawString/enableScissor,
+    // AbstractWidget.getX/getWidth/visible) keep identical names in official
+    // mappings across 1.21.4 -> 1.21.11, whereas Yarn renames members between
+    // snapshots. One source tree therefore compiles for every target with no
+    // per-version source sets.
     mappings loom.officialMojangMappings()
 
-    modImplementation "net.fabricmc:fabric-loader:${v.loader}"
-    // Only the screen-events module is needed, not the whole API. Users still
-    // need Fabric API installed, but the jar stays dependency-light.
-    modImplementation fabricApi.module("fabric-screen-api-v1", v.fapi)
-    modImplementation fabricApi.module("fabric-resource-loader-v0", v.fapi)
+    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
+
+    // Only the modules actually used, not the whole API surface.
+    modImplementation fabricApi.module('fabric-screen-api-v1', target.fapi)
+    modImplementation fabricApi.module('fabric-resource-loader-v0', target.fapi)
 
     implementation project(':core')
-    // core is pure Java with no Minecraft references, so it is safe to bundle.
+    // core is pure Java with no Minecraft references, so bundling is safe.
     include project(':core')
 }
 
@@ -44,7 +50,7 @@ loom {
     runConfigs.configureEach {
         ideConfigGenerated = true
     }
-    // Access wideners are intentionally unused: nothing private is touched.
+    // Access wideners are intentionally absent: nothing private is touched.
 }
 
 processResources {
@@ -54,8 +60,8 @@ processResources {
     filesMatching('fabric.mod.json') {
         expand(
                 'version': project.version,
-                'mcDep': versions[mcVersion].dep,
-                'loaderDep': '>=0.15.0'
+                'mcDep': target.dep,
+                'loaderDep': '>=0.16.0'
         )
     }
 }
@@ -70,15 +76,5 @@ jar {
                 'Implementation-Version': project.version,
                 'Built-For-Minecraft': mcVersion
         )
-    }
-}
-
-// Fail fast if someone tries to build with a JDK older than the game needs.
-tasks.named('compileJava') {
-    doFirst {
-        def major = JavaVersion.current().majorVersion as Integer
-        if (major < 21) {
-            throw new GradleException("Java 21+ required, found ${major}")
-        }
     }
 }

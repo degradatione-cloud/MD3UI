@@ -1,39 +1,42 @@
 // Root build: shared Java conventions only. Each module declares its own plugins.
 //
-// The tree is split so that the parts which do not need Minecraft can be compiled
-// and executed anywhere:
+// The tree is split so the parts that do not need Minecraft can be compiled and
+// executed anywhere:
 //
 //   core   pure Java, zero dependencies. Colour, geometry, motion, widgets.
-//   tools  raster backend + screenshot generator. Runs in CI without a game.
+//   tools  raster backend + screenshot/token generators. Runs in CI, no game.
 //   mod    the Fabric mod. The only module that needs Loom and mappings.
 //
 // That split is what lets CI render the documentation screenshots from the same
 // widget code the mod ships, and unit-test the colour maths without a client.
+// It also means `--configure-on-demand` keeps the core job from downloading
+// Minecraft just to run tests.
+
+version = file('VERSION').text.trim()
 
 subprojects {
     apply plugin: 'java'
 
     group = 'dev.md3ui'
-    version = rootProject.file('VERSION').text.trim()
+    version = rootProject.version
 
     repositories {
         mavenCentral()
     }
 
     java {
-        // 1.21.4 and 1.21.5 run on Java 21; every later version does too.
+        // 1.21.4 already requires Java 21, as does every later version.
         toolchain {
             languageVersion = JavaLanguageVersion.of(21)
         }
-        withSourcesJar()
     }
 
     tasks.withType(JavaCompile).configureEach {
         options.encoding = 'UTF-8'
         options.release = 21
-        // -Xlint without deprecation: Minecraft's own API surface deprecates
-        // aggressively across versions and the noise would bury real warnings.
-        options.compilerArgs << '-Xlint:all,-deprecation,-serial,-this-escape'
+        // Minecraft's API deprecates aggressively across versions; that noise
+        // would bury real warnings, so it is filtered rather than the lot.
+        options.compilerArgs << '-Xlint:all,-deprecation,-serial,-this-escape,-classfile'
     }
 
     tasks.withType(Test).configureEach {

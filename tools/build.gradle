@@ -9,8 +9,8 @@ dependencies {
 /**
  * Renders every documentation screenshot through the real widget code.
  *
- * CI runs this and commits the result, so the images in README cannot drift away
- * from what the mod actually draws.
+ * CI runs this on each push, so the images in README cannot drift away from what
+ * the mod actually draws.
  */
 tasks.register('screenshots', JavaExec) {
     group = 'documentation'
@@ -27,8 +27,21 @@ tasks.register('screenshots', JavaExec) {
  */
 tasks.register('designTokens', JavaExec) {
     group = 'documentation'
-    description = 'Write design/tokens.json (W3C design-token format) for Figma.'
+    description = 'Write design/*.json (W3C tokens + Figma variables).'
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'dev.md3ui.tools.TokenExport'
     args rootProject.file('design').absolutePath
+    systemProperty 'java.awt.headless', 'true'
+}
+
+/**
+ * Draws the mod icon with the same shape solver the UI uses.
+ */
+tasks.register('icon', JavaExec) {
+    group = 'documentation'
+    description = 'Generate the 128x128 Fabric mod icon.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'dev.md3ui.tools.IconGen'
+    args rootProject.file('mod/src/main/resources/assets/md3ui').absolutePath
+    systemProperty 'java.awt.headless', 'true'
 }

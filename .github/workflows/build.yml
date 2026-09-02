@@ -35,11 +35,16 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      # --configure-on-demand keeps Loom out of this job entirely. Without it
+      # Gradle configures :mod too, which downloads and remaps Minecraft before
+      # a single pure-Java test can run.
       - name: Test core
-        run: ./gradlew :core:build --stacktrace
+        run: ./gradlew :core:build --configure-on-demand --stacktrace
 
-      - name: Render screenshots with the shipping renderer
-        run: ./gradlew :tools:screenshots :tools:designTokens --stacktrace
+      - name: Render screenshots and design tokens
+        run: >-
+          ./gradlew :tools:screenshots :tools:designTokens :tools:icon
+          --configure-on-demand --stacktrace
 
       - name: Verify generated artifacts
         run: ./.github/scripts/verify_docs.sh
