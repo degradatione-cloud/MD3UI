@@ -82,9 +82,15 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      # Caching is disabled for the matrix on purpose. Eight legs sharing one
+      # Gradle home raced each other: a leg could restore a cache written by a
+      # sibling mid-run and then try to resolve Loom's locally-generated
+      # `minecraft-merged` artifact from Maven Central, which 404s. Loom already
+      # caches Minecraft per version inside the workspace, so the win from a
+      # shared cache is small next to a flaky matrix.
       - uses: gradle/actions/setup-gradle@v4
         with:
-          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+          cache-disabled: true
 
       - name: Build ${{ matrix.mc }}
         run: ./gradlew :mod:build -Pmc=${{ matrix.mc }} --stacktrace
