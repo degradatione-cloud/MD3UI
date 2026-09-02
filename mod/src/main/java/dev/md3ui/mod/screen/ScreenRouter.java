@@ -6,13 +6,10 @@ import dev.md3ui.mod.Md3Config;
 import dev.md3ui.mod.Md3UI;
 import dev.md3ui.mod.render.MinecraftCanvas;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
+import net.fabricmc.fabric.api.client.screen.v1.ScreenMouseEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
-
-import java.util.List;
 
 /**
  * Decides which vanilla screens get an MD3 skin, and drives the overlay.
@@ -35,6 +32,16 @@ public final class ScreenRouter {
     private final MinecraftCanvas canvas = new MinecraftCanvas();
     private AdoptedScreen active;
     private long lastFrameNanos;
+
+    /**
+     * Left-button state, tracked from the screen's own mouse events.
+     *
+     * <p>The alternative is polling GLFW, which needs the native window handle;
+     * that accessor is one of the few names that is not stable across
+     * 1.21.4&ndash;1.21.11, and reaching for it would defeat the single-source-tree
+     * design. Fabric's mouse events give the same information portably.
+     */
+    private boolean mouseDown;
 
     public ScreenRouter(Md3Config config) {
         this.config = config;
@@ -66,7 +73,7 @@ public final class ScreenRouter {
                 float w = s.width, h = s.height;
                 Md3Canvas c = canvas.begin(graphics, w, h);
                 try {
-                    active.tick(dt, mouseX, mouseY);
+                    active.tick(dt, mouseX, mouseY, mouseDown);
                     active.render(c, scheme, inWorld());
                 } catch (RuntimeException e) {
                     Md3UI.LOGGER.error("[MD3UI] render failure, restoring vanilla UI", e);
@@ -77,8 +84,20 @@ public final class ScreenRouter {
                 }
             });
 
+            // Track the left button so proxied widgets can show a press state.
+            ScreenMouseEvents.afterMouseClick(screen).register(
+                    (s, mouseX, mouseY, button) -> {
+                        if (button == 0) mouseDown = true;
+                    });
+            ScreenMouseEvents.afterMouseRelease(screen).register(
+                    (s, mouseX, mouseY, button) -> {
+                        if (button == 0) mouseDown = false;
+                    });
+
             ScreenEvents.remove(screen).register(s -> {
                 if (active != null && active.screen() == s) active = null;
+                // A screen swap while held would otherwise leave this stuck.
+                mouseDown = false;
             });
         });
     }

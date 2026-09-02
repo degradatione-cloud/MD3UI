@@ -135,7 +135,13 @@ public final class AdoptedScreen {
         return null;
     }
 
-    public void tick(double dt, int mouseX, int mouseY) {
+    /**
+     * @param mouseDown whether the left button is held, supplied by the router
+     *                  from the screen's own click events. Polling GLFW directly
+     *                  would need the native window handle, whose accessor name
+     *                  is not stable across this version range.
+     */
+    public void tick(double dt, int mouseX, int mouseY, boolean mouseDown) {
         enter.advance(dt);
         for (Proxy p : proxies) {
             AbstractWidget w = p.widget;
@@ -145,20 +151,8 @@ public final class AdoptedScreen {
             p.hover.target(hovered ? (w.isFocused() ? Md3Tokens.STATE_FOCUS
                     : Md3Tokens.STATE_HOVER) : (w.isFocused() ? Md3Tokens.STATE_FOCUS : 0));
             p.hover.advance(dt);
-            p.press.target(hovered && isMouseDown() ? 1 : 0);
+            p.press.target(hovered && mouseDown ? 1 : 0);
             p.press.advance(dt);
-        }
-    }
-
-    private static boolean isMouseDown() {
-        try {
-            long window = net.minecraft.client.Minecraft.getInstance()
-                    .getWindow().getWindow();
-            return org.lwjgl.glfw.GLFW.glfwGetMouseButton(window,
-                    org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT)
-                    == org.lwjgl.glfw.GLFW.GLFW_PRESS;
-        } catch (RuntimeException | LinkageError e) {
-            return false;
         }
     }
 
