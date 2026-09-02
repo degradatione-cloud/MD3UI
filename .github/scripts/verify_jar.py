@@ -12,12 +12,18 @@ Usage:
 
 from __future__ import annotations
 
+import io
 import json
 import sys
 import zipfile
 from pathlib import Path
 
-MIN_CLASSES = 15
+# The mod module itself is intentionally thin: a canvas adapter, a screen
+# router, an adopted-screen painter, config, and renderer detection. The widget
+# library lives in `core`, which Loom nests as its own jar, so counting only
+# top-level classes here would undercount by design.
+MIN_MOD_CLASSES = 6
+MIN_TOTAL_CLASSES = 15
 ENTRYPOINT = "dev/md3ui/mod/Md3UI.class"
 
 
@@ -45,23 +51,43 @@ def main() -> None:
         names = zf.namelist()
 
         classes = [n for n in names if n.endswith(".class")]
-        print(f"  classes: {len(classes)}")
-        if len(classes) < MIN_CLASSES:
-            fail(f"only {len(classes)} classes, expected at least {MIN_CLASSES}")
+        print(f"  mod classes: {len(classes)}")
+        if len(classes) < MIN_MOD_CLASSES:
+            fail(f"only {len(classes)} classes in the mod jar, "
+                 f"expected at least {MIN_MOD_CLASSES}")
 
         if ENTRYPOINT not in names:
             fail(f"missing client entrypoint {ENTRYPOINT}")
 
-        # The core module is bundled via Loom's `include`, so its classes must be
-        # reachable at runtime either directly or as a nested jar.
-        has_core_direct = any(n.startswith("dev/md3ui/core/") for n in names)
-        has_core_nested = any(
-            n.startswith("META-INF/jars/") and "core" in n for n in names
-        )
-        if not (has_core_direct or has_core_nested):
+        # The core module is bundled via Loom's `include`, which nests it as its
+        # own jar under META-INF/jars rather than merging the classes. Count
+        # through the nested jar so the total reflects what actually ships.
+        core_direct = [n for n in names if n.startswith("dev/md3ui/core/")]
+        nested = [n for n in names
+                  if n.startswith("META-INF/jars/") and n.endswith(".jar")]
+
+        total = len(classes)
+        if core_direct:
+            print("  core: inline")
+        elif nested:
+            core_jars = [n for n in nested if "core" in n.lower()]
+            if not core_jars:
+                fail(f"no core jar among nested jars: {nested}")
+            for name in core_jars:
+                with zipfile.ZipFile(io.BytesIO(zf.read(name))) as inner:
+                    inner_classes = [n for n in inner.namelist()
+                                     if n.endswith(".class")]
+                    total += len(inner_classes)
+                    print(f"  core: nested {Path(name).name} "
+                          f"({len(inner_classes)} classes)")
+        else:
             fail("core classes are neither bundled nor nested; the mod would "
                  "crash with NoClassDefFoundError at runtime")
-        print(f"  core: {'inline' if has_core_direct else 'nested jar'}")
+
+        print(f"  total classes: {total}")
+        if total < MIN_TOTAL_CLASSES:
+            fail(f"only {total} classes across mod + core, "
+                 f"expected at least {MIN_TOTAL_CLASSES}")
 
         if "fabric.mod.json" not in names:
             fail("fabric.mod.json is missing")

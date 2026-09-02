@@ -38,8 +38,9 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
 
     // Only the modules actually used, not the whole API surface.
+    // Only the screen module is used. Pulling in more of the API would add
+    // hard dependencies for no benefit.
     modImplementation fabricApi.module('fabric-screen-api-v1', target.fapi)
-    modImplementation fabricApi.module('fabric-resource-loader-v0', target.fapi)
 
     implementation project(':core')
     // core is pure Java with no Minecraft references, so bundling is safe.

@@ -136,10 +136,12 @@ public final class AdoptedScreen {
     }
 
     /**
-     * @param mouseDown whether the left button is held, supplied by the router
-     *                  from the screen's own click events. Polling GLFW directly
-     *                  would need the native window handle, whose accessor name
-     *                  is not stable across this version range.
+     * @param mouseDown whether the left button is held. Currently always false
+     *                  for adopted vanilla widgets: see the note in
+     *                  {@code ScreenRouter} on why press state cannot be
+     *                  observed portably across 1.21.4-1.21.11. The parameter
+     *                  stays so the animation path is ready if a stable source
+     *                  appears.
      */
     public void tick(double dt, int mouseX, int mouseY, boolean mouseDown) {
         enter.advance(dt);
