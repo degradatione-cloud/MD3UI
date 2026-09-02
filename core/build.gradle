@@ -1,0 +1,46 @@
+// Pure Java. No Minecraft, no Fabric, no third-party runtime dependencies.
+//
+// Keeping this module clean is what makes the widget code testable and lets the
+// screenshot generator run on a CI box with no game installed.
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// Guard the boundary: a stray Minecraft import here would break both the tools
+// module and the multi-version build, so fail the build instead of finding out
+// later.
+def forbidden = ['net.minecraft', 'net.fabricmc', 'com.mojang']
+
+tasks.register('checkNoGameImports') {
+    group = 'verification'
+    description = 'Fails if core references Minecraft, Fabric or Mojang classes.'
+    def srcDir = file('src/main/java')
+    inputs.dir srcDir
+    outputs.upToDateWhen { false }
+    doLast {
+        def offenders = []
+        srcDir.eachFileRecurse { f ->
+            if (f.name.endsWith('.java')) {
+                f.eachLine { line, n ->
+                    if (line.trim().startsWith('import ')) {
+                        forbidden.each { bad ->
+                            if (line.contains(bad)) {
+                                offenders << "${f.name}:${n}: ${line.trim()}"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (offenders) {
+            throw new GradleException(
+                    "core must stay game-free, found:\n  " + offenders.join('\n  '))
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn 'checkNoGameImports'
+}

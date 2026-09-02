@@ -1,0 +1,84 @@
+plugins {
+    id 'fabric-loom'
+}
+
+// Target version is injected by CI so one source tree builds all eight jars:
+//   ./gradlew :mod:build -Pmc=1.21.11
+// Defaults keep a plain `./gradlew build` working for contributors.
+def mcVersion = project.findProperty('mc') ?: '1.21.11'
+def versions = new groovy.json.JsonSlurper().parse(
+        rootProject.file('versions.json')) as Map
+
+if (!versions.containsKey(mcVersion)) {
+    throw new GradleException("Unsupported -Pmc=${mcVersion}. " +
+            "Known: ${versions.keySet().join(', ')}")
+}
+def v = versions[mcVersion]
+
+archivesBaseName = "md3ui"
+version = "${rootProject.version}+${mcVersion}"
+
+dependencies {
+    minecraft "com.mojang:minecraft:${mcVersion}"
+
+    // Official Mojang mappings, not Yarn, and this is a deliberate choice:
+    // the handful of API members MD3UI touches (GuiGraphics.fill, drawString,
+    // enableScissor, AbstractWidget.getX/getWidth/visible) keep identical names
+    // in official mappings across 1.21.4 -> 1.21.11, whereas Yarn renames
+    // members between snapshots. One source tree therefore compiles for every
+    // target with no per-version source sets.
+    mappings loom.officialMojangMappings()
+
+    modImplementation "net.fabricmc:fabric-loader:${v.loader}"
+    // Only the screen-events module is needed, not the whole API. Users still
+    // need Fabric API installed, but the jar stays dependency-light.
+    modImplementation fabricApi.module("fabric-screen-api-v1", v.fapi)
+    modImplementation fabricApi.module("fabric-resource-loader-v0", v.fapi)
+
+    implementation project(':core')
+    // core is pure Java with no Minecraft references, so it is safe to bundle.
+    include project(':core')
+}
+
+loom {
+    runConfigs.configureEach {
+        ideConfigGenerated = true
+    }
+    // Access wideners are intentionally unused: nothing private is touched.
+}
+
+processResources {
+    inputs.property 'version', project.version
+    inputs.property 'mcVersion', mcVersion
+
+    filesMatching('fabric.mod.json') {
+        expand(
+                'version': project.version,
+                'mcDep': versions[mcVersion].dep,
+                'loaderDep': '>=0.15.0'
+        )
+    }
+}
+
+jar {
+    from(rootProject.file('LICENSE')) {
+        rename { "${it}_md3ui" }
+    }
+    manifest {
+        attributes(
+                'Implementation-Title': 'MD3UI',
+                'Implementation-Version': project.version,
+                'Built-For-Minecraft': mcVersion
+        )
+    }
+}
+
+// Fail fast if someone tries to build with a JDK older than the game needs.
+tasks.named('compileJava') {
+    doFirst {
+        def major = JavaVersion.current().majorVersion as Integer
+        if (major < 21) {
+            throw new GradleException("Java 21+ required, found ${major}")
+        }
+    }
+}

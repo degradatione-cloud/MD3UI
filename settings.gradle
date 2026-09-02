@@ -1,0 +1,17 @@
+pluginManagement {
+    repositories {
+        maven { url = 'https://maven.fabricmc.net/' }
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+plugins {
+    id 'fabric-loom' version '1.7.4' apply false
+}
+
+rootProject.name = 'MD3UI'
+
+include 'core'
+include 'tools'
+include 'mod'

@@ -1,0 +1,258 @@
+{
+  "variableCollections": [
+    {
+      "name": "MD3UI scheme",
+      "modes": ["Light", "Dark"],
+      "variables": [
+        {
+          "name": "primary",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.4039, "g": 0.3137, "b": 0.6431, "a": 1.0000 },
+            "Dark": { "r": 0.8235, "g": 0.7333, "b": 1.0000, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "onPrimary",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 1.0000, "g": 1.0000, "b": 1.0000, "a": 1.0000 },
+            "Dark": { "r": 0.1961, "g": 0.1333, "b": 0.4353, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "primaryContainer",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.9137, "g": 0.8667, "b": 1.0000, "a": 1.0000 },
+            "Dark": { "r": 0.2980, "g": 0.2196, "b": 0.5373, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "onPrimaryContainer",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.0824, "g": 0.0510, "b": 0.3373, "a": 1.0000 },
+            "Dark": { "r": 0.9137, "g": 0.8667, "b": 1.0000, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "secondary",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.3961, "g": 0.3451, "b": 0.4941, "a": 1.0000 },
+            "Dark": { "r": 0.8118, "g": 0.7490, "b": 0.9216, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "onSecondary",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 1.0000, "g": 1.0000, "b": 1.0000, "a": 1.0000 },
+            "Dark": { "r": 0.2078, "g": 0.1686, "b": 0.3020, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "secondaryContainer",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.9137, "g": 0.8667, "b": 1.0000, "a": 1.0000 },
+            "Dark": { "r": 0.2980, "g": 0.2549, "b": 0.3961, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "onSecondaryContainer",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.1216, "g": 0.0863, "b": 0.2118, "a": 1.0000 },
+            "Dark": { "r": 0.9137, "g": 0.8667, "b": 1.0000, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "tertiary",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.5608, "g": 0.2824, "b": 0.3569, "a": 1.0000 },
+            "Dark": { "r": 1.0000, "g": 0.6941, "b": 0.7647, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "onTertiary",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 1.0000, "g": 1.0000, "b": 1.0000, "a": 1.0000 },
+            "Dark": { "r": 0.3529, "g": 0.0941, "b": 0.1765, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "tertiaryContainer",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 1.0000, "g": 0.8510, "b": 0.8824, "a": 1.0000 },
+            "Dark": { "r": 0.4549, "g": 0.1882, "b": 0.2667, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "onTertiaryContainer",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.2471, "g": 0.0000, "b": 0.0980, "a": 1.0000 },
+            "Dark": { "r": 1.0000, "g": 0.8510, "b": 0.8824, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "error",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.7490, "g": 0.0000, "b": 0.1922, "a": 1.0000 },
+            "Dark": { "r": 1.0000, "g": 0.7020, "b": 0.6902, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "onError",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 1.0000, "g": 1.0000, "b": 1.0000, "a": 1.0000 },
+            "Dark": { "r": 0.4078, "g": 0.0000, "b": 0.0863, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "errorContainer",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 1.0000, "g": 0.8549, "b": 0.8471, "a": 1.0000 },
+            "Dark": { "r": 0.5725, "g": 0.0000, "b": 0.1373, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "onErrorContainer",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.2549, "g": 0.0000, "b": 0.0157, "a": 1.0000 },
+            "Dark": { "r": 1.0000, "g": 0.8549, "b": 0.8471, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "surface",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.9843, "g": 0.9725, "b": 1.0000, "a": 1.0000 },
+            "Dark": { "r": 0.0863, "g": 0.0667, "b": 0.1098, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "onSurface",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.1137, "g": 0.1020, "b": 0.1412, "a": 1.0000 },
+            "Dark": { "r": 0.9020, "g": 0.8784, "b": 0.9373, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "onSurfaceVariant",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.2902, "g": 0.2667, "b": 0.3373, "a": 1.0000 },
+            "Dark": { "r": 0.7961, "g": 0.7647, "b": 0.8510, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "surfaceDim",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.8667, "g": 0.8471, "b": 0.9020, "a": 1.0000 },
+            "Dark": { "r": 0.0863, "g": 0.0667, "b": 0.1098, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "surfaceBright",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.9843, "g": 0.9725, "b": 1.0000, "a": 1.0000 },
+            "Dark": { "r": 0.2314, "g": 0.2157, "b": 0.2627, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "surfaceContainerLowest",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 1.0000, "g": 1.0000, "b": 1.0000, "a": 1.0000 },
+            "Dark": { "r": 0.0667, "g": 0.0471, "b": 0.0941, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "surfaceContainerLow",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.9686, "g": 0.9451, "b": 1.0000, "a": 1.0000 },
+            "Dark": { "r": 0.1137, "g": 0.1020, "b": 0.1412, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "surfaceContainer",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.9451, "g": 0.9216, "b": 0.9804, "a": 1.0000 },
+            "Dark": { "r": 0.1333, "g": 0.1176, "b": 0.1569, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "surfaceContainerHigh",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.9216, "g": 0.9020, "b": 0.9608, "a": 1.0000 },
+            "Dark": { "r": 0.1725, "g": 0.1569, "b": 0.2000, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "surfaceContainerHighest",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.9020, "g": 0.8784, "b": 0.9373, "a": 1.0000 },
+            "Dark": { "r": 0.2157, "g": 0.2000, "b": 0.2431, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "inverseSurface",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.2000, "g": 0.1804, "b": 0.2275, "a": 1.0000 },
+            "Dark": { "r": 0.9020, "g": 0.8784, "b": 0.9373, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "inverseOnSurface",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.9569, "g": 0.9333, "b": 0.9922, "a": 1.0000 },
+            "Dark": { "r": 0.2000, "g": 0.1804, "b": 0.2275, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "inversePrimary",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.8235, "g": 0.7333, "b": 1.0000, "a": 1.0000 },
+            "Dark": { "r": 0.4039, "g": 0.3137, "b": 0.6431, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "outline",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.4824, "g": 0.4549, "b": 0.5333, "a": 1.0000 },
+            "Dark": { "r": 0.5843, "g": 0.5529, "b": 0.6353, "a": 1.0000 }
+          }
+        },
+        {
+          "name": "outlineVariant",
+          "type": "COLOR",
+          "valuesByMode": {
+            "Light": { "r": 0.7961, "g": 0.7647, "b": 0.8510, "a": 1.0000 },
+            "Dark": { "r": 0.2902, "g": 0.2667, "b": 0.3373, "a": 1.0000 }
+          }
+        }
+      ]
+    }
+  ]
+}

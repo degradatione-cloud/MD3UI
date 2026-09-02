@@ -1,0 +1,46 @@
+// Root build: shared Java conventions only. Each module declares its own plugins.
+//
+// The tree is split so that the parts which do not need Minecraft can be compiled
+// and executed anywhere:
+//
+//   core   pure Java, zero dependencies. Colour, geometry, motion, widgets.
+//   tools  raster backend + screenshot generator. Runs in CI without a game.
+//   mod    the Fabric mod. The only module that needs Loom and mappings.
+//
+// That split is what lets CI render the documentation screenshots from the same
+// widget code the mod ships, and unit-test the colour maths without a client.
+
+subprojects {
+    apply plugin: 'java'
+
+    group = 'dev.md3ui'
+    version = rootProject.file('VERSION').text.trim()
+
+    repositories {
+        mavenCentral()
+    }
+
+    java {
+        // 1.21.4 and 1.21.5 run on Java 21; every later version does too.
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+        withSourcesJar()
+    }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.release = 21
+        // -Xlint without deprecation: Minecraft's own API surface deprecates
+        // aggressively across versions and the noise would bury real warnings.
+        options.compilerArgs << '-Xlint:all,-deprecation,-serial,-this-escape'
+    }
+
+    tasks.withType(Test).configureEach {
+        useJUnitPlatform()
+        testLogging {
+            events 'passed', 'failed', 'skipped'
+            exceptionFormat = 'full'
+        }
+    }
+}

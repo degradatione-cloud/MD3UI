@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "md3ui",
+  "version": "${version}",
+  "name": "MD3UI",
+  "description": "Rebuilds Minecraft's menus in Material Design 3 Expressive. Renderer-agnostic by design: every shape is decomposed into plain axis-aligned fills, so nothing conflicts with VulkanMod, Sodium or Iris. No mixins, no custom shaders, no access wideners.",
+  "authors": [
+    "degradatione-cloud"
+  ],
+  "contact": {
+    "homepage": "https://github.com/degradatione-cloud/MD3UI",
+    "sources": "https://github.com/degradatione-cloud/MD3UI",
+    "issues": "https://github.com/degradatione-cloud/MD3UI/issues"
+  },
+  "license": "MIT",
+  "icon": "assets/md3ui/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.md3ui.mod.Md3UI"
+    ]
+  },
+  "depends": {
+    "fabricloader": "${loaderDep}",
+    "minecraft": "${mcDep}",
+    "java": ">=21",
+    "fabric-screen-api-v1": "*"
+  },
+  "recommends": {
+    "vulkanmod": "*"
+  },
+  "custom": {
+    "modmenu": {
+      "links": {
+        "modmenu.discord": "https://github.com/degradatione-cloud/MD3UI/issues"
+      }
+    }
+  }
+}

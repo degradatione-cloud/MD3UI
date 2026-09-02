@@ -1,0 +1,131 @@
+name: build
+
+# One source tree, eight Minecraft versions. The matrix is the whole point:
+# a change that compiles against 1.21.11 but breaks 1.21.4 fails here rather
+# than in someone's game.
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Fast feedback: the game-free modules build and test in well under a minute,
+  # so a broken colour solver or a leaking clip stack is reported long before the
+  # eight Loom jobs have finished downloading Minecraft.
+  core:
+    name: core + tools
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Test core
+        run: ./gradlew :core:build --stacktrace
+
+      - name: Render screenshots with the shipping renderer
+        run: ./gradlew :tools:screenshots :tools:designTokens --stacktrace
+
+      - name: Verify generated artifacts
+        run: ./.github/scripts/verify_docs.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: docs-images
+          path: |
+            docs/screenshots/*.png
+            design/*.json
+
+  build:
+    name: MC ${{ matrix.mc }}
+    needs: core
+    runs-on: ubuntu-latest
+    strategy:
+      # Never cancel siblings: knowing exactly which versions broke is the signal.
+      fail-fast: false
+      matrix:
+        mc:
+          - '1.21.4'
+          - '1.21.5'
+          - '1.21.6'
+          - '1.21.7'
+          - '1.21.8'
+          - '1.21.9'
+          - '1.21.10'
+          - '1.21.11'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          cache-read-only: ${{ github.ref != 'refs/heads/main' }}
+
+      - name: Build ${{ matrix.mc }}
+        run: ./gradlew :mod:build -Pmc=${{ matrix.mc }} --stacktrace
+
+      - name: Verify the jar
+        run: ./.github/scripts/find_and_verify.sh '${{ matrix.mc }}'
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: md3ui-${{ matrix.mc }}
+          path: dist/*.jar
+          if-no-files-found: error
+
+  # Only after every version compiles do we publish. A release containing seven
+  # of eight jars is worse than no release at all.
+  release:
+    name: release
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: md3ui-*
+          path: artifacts
+          merge-multiple: true
+
+      - name: Refuse to publish a partial release
+        run: |
+          set -euo pipefail
+          ls -la artifacts
+          count=$(find artifacts -name '*.jar' | wc -l)
+          echo "$count jars present"
+          test "$count" -ge 8
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/*.jar
+          generate_release_notes: true
+          body: |
+            Material Design 3 Expressive UI for Minecraft, one jar per supported version.
+
+            Built for Fabric 1.21.4 through 1.21.11. Requires Fabric API.
+
+            Compatible with VulkanMod, Sodium and Iris: MD3UI draws only through
+            `GuiGraphics.fill` and `drawString`, and ships no mixins, no custom
+            shaders and no access wideners.

@@ -1,0 +1,34 @@
+// Offline rendering tools. Runs on any JDK, no game required.
+
+dependencies {
+    implementation project(':core')
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+/**
+ * Renders every documentation screenshot through the real widget code.
+ *
+ * CI runs this and commits the result, so the images in README cannot drift away
+ * from what the mod actually draws.
+ */
+tasks.register('screenshots', JavaExec) {
+    group = 'documentation'
+    description = 'Render docs/screenshots/*.png using the shipping renderer.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'dev.md3ui.tools.ScreenshotGen'
+    args rootProject.file('docs/screenshots').absolutePath
+    // Headless so it works on a CI runner with no display.
+    systemProperty 'java.awt.headless', 'true'
+}
+
+/**
+ * Exports the generated colour scheme as Figma-importable design tokens.
+ */
+tasks.register('designTokens', JavaExec) {
+    group = 'documentation'
+    description = 'Write design/tokens.json (W3C design-token format) for Figma.'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'dev.md3ui.tools.TokenExport'
+    args rootProject.file('design').absolutePath
+}
