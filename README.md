@@ -9,10 +9,18 @@ spring physics, and a renderer that stays out of VulkanMod's way.
 ![client only](https://img.shields.io/badge/side-client%20only-blue)
 ![no mixins](https://img.shields.io/badge/mixins-none-success)
 
+**[⬇ Download for your version](#download)** · Fabric · requires
+[Fabric API](https://modrinth.com/mod/fabric-api) · client-side only
+
 ![Components, dark theme](docs/screenshots/components-dark.png)
 
-Every image in this README is rendered by the mod's own drawing code in CI, not
-mocked up in a design tool. If a widget regresses, the screenshot changes.
+Every image in this README is rendered by the mod's own widget code, not mocked
+up in a design tool — CI regenerates them on each push, so a visual regression
+shows up in the docs automatically. They are produced through an offscreen
+raster backend rather than captured in-game, which means layout, colour, shape
+geometry and animation phases are exactly what ships, while the font is a baked
+bitmap instead of Minecraft's own. Expect slightly different text metrics in
+game.
 
 ---
 
@@ -167,15 +175,40 @@ a wrong hue.
 
 ---
 
-## Installation
+## Download
 
-1. Install [Fabric Loader](https://fabricmc.net/use/) 0.15+ and
-   [Fabric API](https://modrinth.com/mod/fabric-api).
-2. Download the jar for your Minecraft version from
-   [Releases](https://github.com/degradatione-cloud/MD3UI/releases).
-3. Drop it in `.minecraft/mods/`.
+Pick your Minecraft version — direct download, no redirect page:
 
-Client-side only — servers neither need nor notice it.
+| Minecraft | Download | VulkanMod available |
+|---|---|---|
+| **1.21.11** | [md3ui-1.0.0+1.21.11.jar](https://github.com/degradatione-cloud/MD3UI/releases/download/v1.0.0/md3ui-1.0.0%2B1.21.11.jar) | yes — 0.6.8 |
+| **1.21.10** | [md3ui-1.0.0+1.21.10.jar](https://github.com/degradatione-cloud/MD3UI/releases/download/v1.0.0/md3ui-1.0.0%2B1.21.10.jar) | yes — 0.6.6 |
+| **1.21.9** | [md3ui-1.0.0+1.21.9.jar](https://github.com/degradatione-cloud/MD3UI/releases/download/v1.0.0/md3ui-1.0.0%2B1.21.9.jar) | yes — 0.6.6 |
+| **1.21.8** | [md3ui-1.0.0+1.21.8.jar](https://github.com/degradatione-cloud/MD3UI/releases/download/v1.0.0/md3ui-1.0.0%2B1.21.8.jar) | no upstream release |
+| **1.21.7** | [md3ui-1.0.0+1.21.7.jar](https://github.com/degradatione-cloud/MD3UI/releases/download/v1.0.0/md3ui-1.0.0%2B1.21.7.jar) | no upstream release |
+| **1.21.6** | [md3ui-1.0.0+1.21.6.jar](https://github.com/degradatione-cloud/MD3UI/releases/download/v1.0.0/md3ui-1.0.0%2B1.21.6.jar) | no upstream release |
+| **1.21.5** | [md3ui-1.0.0+1.21.5.jar](https://github.com/degradatione-cloud/MD3UI/releases/download/v1.0.0/md3ui-1.0.0%2B1.21.5.jar) | yes — 0.5.6 |
+| **1.21.4** | [md3ui-1.0.0+1.21.4.jar](https://github.com/degradatione-cloud/MD3UI/releases/download/v1.0.0/md3ui-1.0.0%2B1.21.4.jar) | yes — 0.5.6 |
+
+All eight jars are built from one commit by
+[the same CI run](https://github.com/degradatione-cloud/MD3UI/actions/workflows/build.yml)
+and the release is refused if any version fails. Newer builds appear on the
+[releases page](https://github.com/degradatione-cloud/MD3UI/releases/latest);
+links above are pinned to `v1.0.0` so they keep working.
+
+The VulkanMod column is upstream's release coverage, not a requirement — MD3UI
+works with or without it. VulkanMod simply has no build for 1.21.6 through
+1.21.8 (it goes 0.5.6 → 1.21.5, then 0.6.6 → 1.21.9).
+
+### Installing
+
+1. Install [Fabric Loader](https://fabricmc.net/use/) 0.16+ and
+   [Fabric API](https://modrinth.com/mod/fabric-api) for your version.
+2. Drop the jar above into `.minecraft/mods/`.
+3. Launch. First run writes `config/md3ui.properties`.
+
+Client-side only — servers neither need nor notice it. The jar is ~89 KB and
+pulls in no dependencies beyond Fabric API.
 
 ---
 
@@ -250,9 +283,11 @@ tools/   raster canvas + screenshot and token generators. Runs without a game.
 mod/     the Fabric mod. Thin: a canvas adapter, a screen router, config.
 ```
 
-The split is what makes the screenshots trustworthy. `core` cannot reference
+The split is what makes the screenshots meaningful. `core` cannot reference
 Minecraft, so the same widget code runs under `RasterCanvas` in CI and
-`MinecraftCanvas` in game. Documentation images are the real renderer's output.
+`MinecraftCanvas` in game — the documentation images come from the shipping
+layout and paint code, with a baked bitmap font standing in for Minecraft's so
+output is byte-identical on any machine.
 
 ### CI
 
@@ -309,6 +344,11 @@ Stated plainly rather than discovered later:
   would mean texture binding, which is exactly the coupling this mod avoids.
 - **In-game theme editor is not built yet.** Themes are configured through the
   properties file for now.
+- **The screenshots are not captured in-game.** They run the shipping widget code
+  through an offscreen raster backend, so layout, colour and animation phases are
+  real, but the font is a baked bitmap and there is no world or panorama behind
+  the surfaces. Text metrics will differ slightly under Minecraft's own font.
+  Real in-game captures are welcome via a pull request or issue.
 
 ---
 
