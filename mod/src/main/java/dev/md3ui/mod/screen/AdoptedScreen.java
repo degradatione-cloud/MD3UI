@@ -85,9 +85,14 @@ public final class AdoptedScreen {
                 w.visible = false;
             }
             proxies.add(p);
+            Md3UI.LOGGER.info("[MD3UI]   {} {} x={} y={} {}x{} vis={} '{}'",
+                    k, w.getClass().getName(),
+                    w.getX(), w.getY(), w.getWidth(), w.getHeight(),
+                    p.wasVisible,
+                    plain(w.getMessage() == null ? "" : w.getMessage().getString()));
         }
-        Md3UI.LOGGER.debug("[MD3UI] adopted {} widgets on {}",
-                proxies.size(), screen.getClass().getSimpleName());
+        Md3UI.LOGGER.info("[MD3UI] adopted {} widgets on {}",
+                proxies.size(), screen.getClass().getName());
     }
 
     /** Put every widget back exactly as it was; used when rendering fails. */
