@@ -1,5 +1,16 @@
 # MD3UI
 
+> ## ⚠️ v1.0.0 is a broken preview — do not install it
+>
+> The first public build compiles and Fabric loads it, but a real Minecraft
+> 1.21.11 run found an adoption/render-order defect: menus can show an incomplete
+> MD3 surface with controls missing. This is **not** a VulkanMod/Sodium issue; it
+> reproduces on vanilla Fabric with only Fabric API. The GitHub release is marked
+> pre-release while the fix is verified in a real client. The links below stay as
+> build artefacts for testing and reproduction, **not a recommendation to use
+> them**. A replacement release will be published only after real in-game title,
+> options and world-selection screenshots prove the controls render and work.
+
 Minecraft's menus rebuilt in **Material Design 3 Expressive** — generated colour,
 spring physics, and a renderer that stays out of VulkanMod's way.
 
