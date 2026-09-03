@@ -16,7 +16,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.TitleScreen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -61,13 +60,10 @@ public final class AdoptedScreen {
     private final List<Proxy> proxies = new ArrayList<>();
     private final Spring enter = Motion.SPATIAL_DEFAULT.instance(0);
     private String heading;
-    /** The title screen gets a wordmark instead of an app bar. */
-    private final boolean isTitleScreen;
 
     public AdoptedScreen(Screen screen, Md3Config config) {
         this.screen = screen;
         this.config = config;
-        this.isTitleScreen = screen instanceof TitleScreen;
         this.heading = plain(screen.getTitle() == null ? "" : screen.getTitle().getString());
         enter.target(1);
         if (config.reducedMotion) enter.snapTo(1);
@@ -94,14 +90,13 @@ public final class AdoptedScreen {
                 w.visible = false;
             }
             proxies.add(p);
-            // Per-widget detail is debug-level: useful when a screen misbehaves,
-            // noise in a normal log.
-            Md3UI.LOGGER.debug("[MD3UI]   {} {} {}x{} at {},{} '{}'",
-                    k, w.getClass().getName(), w.getWidth(), w.getHeight(),
-                    w.getX(), w.getY(),
+            Md3UI.LOGGER.info("[MD3UI]   {} {} x={} y={} {}x{} vis={} '{}'",
+                    k, w.getClass().getName(),
+                    w.getX(), w.getY(), w.getWidth(), w.getHeight(),
+                    p.wasVisible,
                     plain(w.getMessage() == null ? "" : w.getMessage().getString()));
         }
-        Md3UI.LOGGER.debug("[MD3UI] adopted {} widgets on {}",
+        Md3UI.LOGGER.info("[MD3UI] adopted {} widgets on {}",
                 proxies.size(), screen.getClass().getName());
     }
 
@@ -217,7 +212,17 @@ public final class AdoptedScreen {
     public void render(Md3Canvas c, Md3Scheme s, boolean inWorld) {
         float t = config.reducedMotion ? 1f : (float) enter.value();
 
-        renderBackground(c, s, inWorld, t);
+        // Background: scrim over a world, tonal surface otherwise.
+        if (inWorld) {
+            int a = Math.round(Md3Tokens.SCRIM_OPACITY * 255 * t * config.scrimStrength);
+            c.fillRect(0, 0, c.width(), c.height(), Argb.withAlpha(s.scrim, Math.min(255, a)));
+        } else if (!config.keepBackground) {
+            c.fillRect(0, 0, c.width(), c.height(), s.surface);
+        } else {
+            // Keep the panorama but tone it down so MD3 surfaces read clearly.
+            c.fillRect(0, 0, c.width(), c.height(),
+                    Argb.withAlpha(s.surface, Math.round(190 * t)));
+        }
 
         c.pushAlpha(t);
         c.pushTranslate(0, (1f - t) * 5f);
@@ -239,119 +244,12 @@ public final class AdoptedScreen {
         c.popAlpha();
     }
 
-    /**
-     * Paint the MD3 backdrop.
-     *
-     * <p>A translucent tint over vanilla's panorama was the wrong call: the
-     * water, mobs and vanilla logo stayed legible through it and the result read
-     * as a dimmed vanilla screen rather than a Material surface. This paints a
-     * real opaque surface with a tonal gradient plus large Expressive shapes,
-     * which is what the design actually calls for.
-     *
-     * <p>Opacity is conditional for one concrete reason: MD3UI draws
-     * <em>after</em> vanilla, and text fields and scrolling lists are left to
-     * paint themselves (reimplementing {@code EditBox} caret state across eight
-     * versions is not worth the risk). An opaque fill would erase them, so when
-     * such a widget is present the backdrop stays translucent. Over a live world
-     * it is always a scrim, since covering the game entirely on the pause screen
-     * would be wrong.
-     */
-    private void renderBackground(Md3Canvas c, Md3Scheme s, boolean inWorld, float t) {
-        float w = c.width(), h = c.height();
-
-        if (inWorld) {
-            int a = Math.round(Md3Tokens.SCRIM_OPACITY * 255 * t * config.scrimStrength);
-            c.fillRect(0, 0, w, h, Argb.withAlpha(s.scrim, Math.min(255, a)));
-            return;
-        }
-
-        if (!canPaintOpaque()) {
-            // Self-rendering widgets present: tint only, or they vanish.
-            c.fillRect(0, 0, w, h, Argb.withAlpha(s.surface, Math.round(225 * t)));
-            return;
-        }
-
-        // Opaque tonal gradient: surfaceDim at the top easing to surface, which
-        // gives the screen depth without a texture.
-        c.fillGradientV(0, 0, w, h, s.surfaceDim, s.surface);
-
-        // Expressive decoration. Two large low-contrast shapes, one superellipse
-        // and one circle, sized from the viewport so they scale with GUI scale
-        // rather than sitting at fixed pixel offsets.
-        float unit = Math.min(w, h);
-        Shapes.squircle(c, -unit * 0.22f, -unit * 0.30f, unit * 0.95f, unit * 0.95f,
-                Md3Tokens.SQUIRCLE_N,
-                Argb.scaleAlpha(s.primaryContainer, 0.30f * t));
-        Shapes.circle(c, w - unit * 0.10f, h * 0.20f, unit * 0.34f,
-                Argb.scaleAlpha(s.tertiaryContainer, 0.22f * t));
-        Shapes.squircle(c, w * 0.55f, h - unit * 0.34f, unit * 0.70f, unit * 0.70f,
-                Md3Tokens.SQUIRCLE_N,
-                Argb.scaleAlpha(s.secondaryContainer, 0.20f * t));
-    }
-
-    /**
-     * True when no adopted widget paints itself, so an opaque backdrop is safe.
-     */
-    private boolean canPaintOpaque() {
-        if (!config.keepBackground) return true;
-        for (Proxy p : proxies) {
-            if (p.kind == Kind.TEXT_FIELD || p.kind == Kind.LIST) return false;
-            // Unknown widgets keep their vanilla art and would be covered too.
-            if (p.kind == Kind.UNKNOWN && p.wasVisible) return false;
-        }
-        return true;
-    }
-
-    /**
-     * App bar, or a display-type wordmark on the title screen.
-     *
-     * <p>{@code TitleScreen.getTitle()} is empty in vanilla, because the logo is
-     * a texture rather than a title string. An app bar with no text would be a
-     * bare stripe, so the title screen instead gets large MD3 display type where
-     * the panorama logo used to be.
-     */
     private void renderHeading(Md3Canvas c, Md3Scheme s) {
-        if (isTitleScreen) {
-            renderWordmark(c, s);
-            return;
-        }
         if (heading == null || heading.isEmpty()) return;
         float h = Md3Tokens.APP_BAR_HEIGHT;
         c.fillRect(0, 0, c.width(), h, Argb.withAlpha(s.surfaceContainer, 210));
         c.drawText(heading, Md3Tokens.SPACE_XL, (h - c.lineHeight()) / 2f,
                 s.onSurface, false);
-    }
-
-    /**
-     * MINECRAFT set as MD3 display type.
-     *
-     * <p>Glyphs cannot be scaled through {@code drawString} without touching
-     * {@code pose()}, which is the one thing this mod refuses to do because its
-     * type changed in 1.21.6. Weight is faked instead: the run is drawn several
-     * times at sub-pixel offsets, which thickens the strokes convincingly at GUI
-     * scale 2 and stays renderer-agnostic.
-     */
-    private void renderWordmark(Md3Canvas c, Md3Scheme s) {
-        String word = "MINECRAFT";
-        float tw = c.textWidth(word);
-        float x = (c.width() - tw) / 2f;
-        float y = c.height() * 0.13f;
-
-        for (float dx = 0; dx <= 1.2f; dx += 0.4f) {
-            for (float dy = 0; dy <= 1.2f; dy += 0.4f) {
-                c.drawText(word, x + dx, y + dy, s.primary, false);
-            }
-        }
-
-        String sub = "MATERIAL 3 EXPRESSIVE";
-        float sw = c.textWidth(sub);
-        c.drawText(sub, (c.width() - sw) / 2f, y + c.lineHeight() + 4f,
-                s.onSurfaceVariant, false);
-
-        // Accent rule under the wordmark, echoing the nav indicator pill.
-        float ruleW = Math.max(tw, sw) + 16f;
-        Shapes.pill(c, (c.width() - ruleW) / 2f, y + c.lineHeight() * 2 + 8f,
-                ruleW, 2f, Argb.scaleAlpha(s.primary, 0.55f));
     }
 
     private void drawProxy(Md3Canvas c, Md3Scheme s, Proxy p) {
