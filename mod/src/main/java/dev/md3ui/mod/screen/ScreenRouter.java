@@ -8,21 +8,12 @@ import dev.md3ui.mod.render.MinecraftCanvas;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.AccessibilityOptionsScreen;
-import net.minecraft.client.gui.screens.OptionsScreen;
 import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
-import net.minecraft.client.gui.screens.options.ChatOptionsScreen;
-import net.minecraft.client.gui.screens.options.LanguageSelectScreen;
-import net.minecraft.client.gui.screens.options.MouseSettingsScreen;
-import net.minecraft.client.gui.screens.options.OnlineOptionsScreen;
-import net.minecraft.client.gui.screens.options.SkinCustomizationScreen;
-import net.minecraft.client.gui.screens.options.SoundOptionsScreen;
-import net.minecraft.client.gui.screens.options.VideoSettingsScreen;
-import net.minecraft.client.gui.screens.options.controls.ControlsScreen;
-import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
+import net.minecraft.client.gui.screens.options.OptionsScreen;
+import net.minecraft.client.gui.screens.options.OptionsSubScreen;
 import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 
 /**
@@ -118,17 +109,13 @@ public final class ScreenRouter {
     private boolean shouldSkin(Screen screen) {
         if (config.replaceTitle && screen instanceof TitleScreen) return true;
 
+        // OptionsSubScreen is the common parent of every settings sub-page
+        // (video, sound, controls, key binds, language, chat, skin, online,
+        // accessibility). Matching the base class instead of enumerating
+        // subclasses covers pages that moved package between versions, and
+        // picks up new ones for free.
         if (config.replaceOptions && (screen instanceof OptionsScreen
-                || screen instanceof VideoSettingsScreen
-                || screen instanceof SoundOptionsScreen
-                || screen instanceof SkinCustomizationScreen
-                || screen instanceof LanguageSelectScreen
-                || screen instanceof AccessibilityOptionsScreen
-                || screen instanceof ChatOptionsScreen
-                || screen instanceof OnlineOptionsScreen
-                || screen instanceof ControlsScreen
-                || screen instanceof MouseSettingsScreen
-                || screen instanceof KeyBindsScreen)) return true;
+                || screen instanceof OptionsSubScreen)) return true;
 
         if (config.replacePause && screen instanceof PauseScreen) return true;
         if (config.replaceWorldSelect && screen instanceof SelectWorldScreen) return true;
