@@ -81,7 +81,13 @@ public final class ScreenRouter {
                 return;
             }
 
-            ScreenEvents.beforeRender(screen).register((s, graphics, mouseX, mouseY, delta) -> {
+            // This must be AFTER_RENDER. BEFORE_RENDER was a deceptively clean
+            // compile-time success but vanilla painted its screen background and
+            // widget sprites immediately afterwards, covering the MD3 layer in
+            // the released game. AFTER_RENDER leaves existing unadopted widgets
+            // (and other mods' overlays) above us while the adopted widgets stay
+            // hidden, exactly the intended stacking order.
+            ScreenEvents.afterRender(screen).register((s, graphics, mouseX, mouseY, delta) -> {
                 if (active == null || active.screen() != s) return;
                 double dt = frameDelta();
                 Md3Scheme scheme = config.scheme();
