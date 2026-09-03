@@ -63,6 +63,19 @@ public final class ScreenRouter {
     public void register() {
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (!config.enabled) return;
+
+            // Fabric can emit AFTER_INIT more than once for one screen during
+            // its initial layout pass. The first adoption deliberately sets
+            // vanilla widgets invisible; if the second event recreated the
+            // wrapper it would record those already-hidden widgets as
+            // `wasVisible=false` and the renderer would correctly-but-uselessly
+            // skip every proxy. Reuse the existing wrapper instead.
+            if (active != null && active.screen() == screen) {
+                Md3UI.LOGGER.debug("[MD3UI] ignoring duplicate init for {}",
+                        screen.getClass().getName());
+                return;
+            }
+
             if (!shouldSkin(screen)) {
                 active = null;
                 return;
