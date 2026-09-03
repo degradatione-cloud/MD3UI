@@ -9,6 +9,7 @@ import dev.md3ui.core.theme.Md3Scheme;
 import dev.md3ui.core.theme.Md3Tokens;
 import dev.md3ui.mod.Md3Config;
 import dev.md3ui.mod.Md3UI;
+import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -72,6 +73,10 @@ public final class AdoptedScreen {
 
     /** Take over rendering for the given widgets. */
     public void adopt(List<AbstractWidget> widgets) {
+        // Screen#init() can run twice. Each pass builds a fresh widget list, so
+        // proxies from the previous pass point at discarded instances. Replace
+        // rather than append.
+        restore();
         for (AbstractWidget w : widgets) {
             Kind k = classify(w);
             Proxy p = new Proxy(w, k);
@@ -117,6 +122,11 @@ public final class AdoptedScreen {
         if (w instanceof EditBox) return Kind.TEXT_FIELD;
         if (w instanceof AbstractSliderButton) return Kind.SLIDER;
         if (w instanceof CycleButton<?>) return Kind.CYCLE;
+        // AbstractButton covers Button, ImageButton, SpriteIconButton and the
+        // anonymous title-screen builders. Matching only Button misses the
+        // language/accessibility icon buttons, which then stay vanilla and get
+        // covered by the surface tint.
+        if (w instanceof AbstractButton) return Kind.BUTTON;
         if (w instanceof Button) return Kind.BUTTON;
         return Kind.UNKNOWN;
     }

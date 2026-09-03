@@ -64,15 +64,23 @@ public final class ScreenRouter {
         ScreenEvents.AFTER_INIT.register((client, screen, scaledWidth, scaledHeight) -> {
             if (!config.enabled) return;
 
-            // Fabric can emit AFTER_INIT more than once for one screen during
-            // its initial layout pass. The first adoption deliberately sets
-            // vanilla widgets invisible; if the second event recreated the
-            // wrapper it would record those already-hidden widgets as
-            // `wasVisible=false` and the renderer would correctly-but-uselessly
-            // skip every proxy. Reuse the existing wrapper instead.
+            // Fabric can emit AFTER_INIT more than once because vanilla calls
+            // Screen#init() again after the first layout. That second init
+            // constructs *new* widget instances. Keeping the first wrapper
+            // leaves us drawing orphaned widgets (often still 0x0) while the
+            // live ones sit under the MD3 surface tint — which is exactly the
+            // "tinted background, no buttons" failure seen in 1.21.11.
+            // Re-adopt the current list; afterRender is already registered.
             if (active != null && active.screen() == screen) {
-                Md3UI.LOGGER.debug("[MD3UI] ignoring duplicate init for {}",
-                        screen.getClass().getName());
+                try {
+                    active.adopt(Screens.getButtons(screen));
+                    Md3UI.LOGGER.info("[MD3UI] re-adopted {} ({} widgets)",
+                            screen.getClass().getName(),
+                            Screens.getButtons(screen).size());
+                } catch (RuntimeException e) {
+                    Md3UI.LOGGER.warn("[MD3UI] re-adopt failed for {}: {}",
+                            screen.getClass().getName(), e.toString());
+                }
                 return;
             }
 
