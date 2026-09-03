@@ -1,16 +1,5 @@
 # MD3UI
 
-> ## ⚠️ v1.0.0 is a broken preview — do not install it
->
-> The first public build compiles and Fabric loads it, but a real Minecraft
-> 1.21.11 run found an adoption/render-order defect: menus can show an incomplete
-> MD3 surface with controls missing. This is **not** a VulkanMod/Sodium issue; it
-> reproduces on vanilla Fabric with only Fabric API. The GitHub release is marked
-> pre-release while the fix is verified in a real client. The links below stay as
-> build artefacts for testing and reproduction, **not a recommendation to use
-> them**. A replacement release will be published only after real in-game title,
-> options and world-selection screenshots prove the controls render and work.
-
 Minecraft's menus rebuilt in **Material Design 3 Expressive** — generated colour,
 spring physics, and a renderer that stays out of VulkanMod's way.
 
@@ -91,13 +80,29 @@ references their classes, so a missing renderer mod cannot cause a crash.
 
 ## Screenshots
 
-### Title screen
+### Real in-game captures (Minecraft 1.21.11, MD3UI v1.0.1)
+
+| Title screen | Options |
+|---|---|
+| ![Title screen real](docs/screenshots/title-screen-real.png) | ![Options screen real](docs/screenshots/options-screen-real.png) |
+
+MD3 filled buttons with spring-animated hover layers, tonal surface gradient, and
+no app bar on the title screen (vanilla's `Screen#getTitle()` there is a narrator
+string, not display copy). The translucent tint over the panorama is temporary:
+an opaque MD3 surface with Expressive shapes killed the client in testing and is
+being debugged separately.
+
+---
+
+### Design mockups (early development)
+
+#### Title screen
 ![Title screen](docs/screenshots/title-screen.png)
 
 Expressive superellipse hero shapes, a filled/tonal/outlined button hierarchy,
 and a card showing the live generated palette.
 
-### Options
+#### Options
 ![Options screen](docs/screenshots/options-screen.png)
 
 Navigation rail with the travelling `secondaryContainer` pill — the most
@@ -105,7 +110,7 @@ recognisable MD3 layout element, and a natural fit because vanilla's option
 screens are really tab sets drawn as loose button grids. Sliders show the
 Expressive inversion: the track thickens while the handle narrows on grab.
 
-### World selection
+#### World selection
 ![World selection](docs/screenshots/world-select.png)
 
 Two-line list rows with spring-based rubber-band scrolling, a detail card, and
