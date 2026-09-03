@@ -211,7 +211,14 @@ public final class AdoptedScreen {
 
         renderHeading(c, s);
         for (Proxy p : proxies) {
-            if (!p.wasVisible || p.kind == Kind.UNKNOWN) continue;
+            // `wasVisible` only exists so restore() can return vanilla to its
+            // original state if MD3 rendering fails. It must never decide
+            // whether the MD3 proxy paints: a repeated AFTER_INIT observes the
+            // widget after our first pass has hidden it, and treating that as an
+            // instruction to skip the proxy turns a complete UI into a blank
+            // tinted surface. Unknown widgets are the sole safe exception —
+            // they remain vanilla and are never proxied visually.
+            if (p.kind == Kind.UNKNOWN) continue;
             drawProxy(c, s, p);
         }
 
