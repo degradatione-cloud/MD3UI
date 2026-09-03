@@ -16,6 +16,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,12 +65,28 @@ public final class AdoptedScreen {
     public AdoptedScreen(Screen screen, Md3Config config) {
         this.screen = screen;
         this.config = config;
-        this.heading = plain(screen.getTitle() == null ? "" : screen.getTitle().getString());
+        this.heading = resolveHeading(screen);
         enter.target(1);
         if (config.reducedMotion) enter.snapTo(1);
     }
 
     public Screen screen() { return screen; }
+
+    /**
+     * The app-bar title, or null when the screen should not have one.
+     *
+     * <p>{@code Screen#getTitle()} is not always display copy. On the title
+     * screen it returns the narrator string "Title Screen", which is meant for
+     * screen readers announcing where the user is — rendering it puts a
+     * developer-facing label across the top of the main menu. Vanilla never
+     * draws it either; it shows the logo texture instead. So the title screen
+     * gets no app bar, and other screens keep their genuine titles ("Options",
+     * "Select World"), which vanilla does draw.
+     */
+    private static String resolveHeading(Screen screen) {
+        if (screen instanceof TitleScreen) return null;
+        return plain(screen.getTitle() == null ? "" : screen.getTitle().getString());
+    }
 
     /** Take over rendering for the given widgets. */
     public void adopt(List<AbstractWidget> widgets) {
