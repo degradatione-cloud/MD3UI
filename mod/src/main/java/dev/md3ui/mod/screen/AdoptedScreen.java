@@ -195,7 +195,10 @@ public final class AdoptedScreen {
         enter.advance(dt);
         for (Proxy p : proxies) {
             AbstractWidget w = p.widget;
-            boolean hovered = w.isActive() && p.wasVisible
+            // `w.active`, not isActive(), and no wasVisible test: MD3 hid the
+            // widget itself, so both of those would report every control as
+            // dead and kill the hover layer.
+            boolean hovered = w.active
                     && mouseX >= w.getX() && mouseX < w.getX() + w.getWidth()
                     && mouseY >= w.getY() && mouseY < w.getY() + w.getHeight();
             p.hover.target(hovered ? (w.isFocused() ? Md3Tokens.STATE_FOCUS
@@ -255,7 +258,12 @@ public final class AdoptedScreen {
         float ww = w.getWidth(), hh = w.getHeight();
         if (ww <= 0 || hh <= 0) return;
 
-        boolean on = w.isActive();
+        // NOT isActive(): that returns `active && visible`, and MD3 has already
+        // set visible=false to suppress the vanilla art. Using it made every
+        // adopted button render in its disabled colours — a dark translucent
+        // overlay instead of `primary` — which is what made the title screen
+        // look like a blank tinted surface in 1.21.11.
+        boolean on = w.active;
         float ov = (float) p.hover.value();
         float pr = config.reducedMotion ? 0f : (float) p.press.value();
         String label = plain(w.getMessage() == null ? "" : w.getMessage().getString());
