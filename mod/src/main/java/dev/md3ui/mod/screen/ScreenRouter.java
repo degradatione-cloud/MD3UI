@@ -8,7 +8,22 @@ import dev.md3ui.mod.render.MinecraftCanvas;
 import net.fabricmc.fabric.api.client.screen.v1.ScreenEvents;
 import net.fabricmc.fabric.api.client.screen.v1.Screens;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.AccessibilityOptionsScreen;
+import net.minecraft.client.gui.screens.OptionsScreen;
+import net.minecraft.client.gui.screens.PauseScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
+import net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen;
+import net.minecraft.client.gui.screens.options.ChatOptionsScreen;
+import net.minecraft.client.gui.screens.options.LanguageSelectScreen;
+import net.minecraft.client.gui.screens.options.MouseSettingsScreen;
+import net.minecraft.client.gui.screens.options.OnlineOptionsScreen;
+import net.minecraft.client.gui.screens.options.SkinCustomizationScreen;
+import net.minecraft.client.gui.screens.options.SoundOptionsScreen;
+import net.minecraft.client.gui.screens.options.VideoSettingsScreen;
+import net.minecraft.client.gui.screens.options.controls.ControlsScreen;
+import net.minecraft.client.gui.screens.options.controls.KeyBindsScreen;
+import net.minecraft.client.gui.screens.worldselection.SelectWorldScreen;
 
 /**
  * Decides which vanilla screens get an MD3 skin, and drives the overlay.
@@ -24,6 +39,13 @@ import net.minecraft.client.gui.screens.Screen;
  * existing widgets means a modpack's added buttons keep working and still get the
  * MD3 look, and if MD3UI fails to recognise a control it stays visible in vanilla
  * form rather than becoming unclickable.
+ *
+ * <p><b>Screens are matched with {@code instanceof}, never by class name.</b> In a
+ * production jar Minecraft's classes carry intermediary names, so
+ * {@code getClass().getSimpleName()} returns {@code class_442} rather than
+ * {@code TitleScreen}: name matching works in a dev environment and silently
+ * matches nothing for actual players. Real class references are remapped by Loom
+ * at build time and therefore work in both.
  */
 public final class ScreenRouter {
 
@@ -59,9 +81,11 @@ public final class ScreenRouter {
                 // Vanilla widgets stay functional but invisible; MD3 draws in
                 // their place and forwards clicks to them.
                 active.adopt(Screens.getButtons(screen));
+                Md3UI.LOGGER.info("[MD3UI] skinning {} ({} widgets)",
+                        screen.getClass().getName(), Screens.getButtons(screen).size());
             } catch (RuntimeException e) {
                 Md3UI.LOGGER.warn("[MD3UI] could not adopt {}: {}",
-                        screen.getClass().getSimpleName(), e.toString());
+                        screen.getClass().getName(), e.toString());
                 active = null;
                 return;
             }
@@ -92,27 +116,24 @@ public final class ScreenRouter {
 
     /** Which vanilla screens are in scope, per config. */
     private boolean shouldSkin(Screen screen) {
-        String n = screen.getClass().getName();
-        if (n.startsWith("dev.md3ui")) return false;
-        String simple = screen.getClass().getSimpleName();
+        if (config.replaceTitle && screen instanceof TitleScreen) return true;
 
-        if (config.replaceTitle && simple.equals("TitleScreen")) return true;
-        if (config.replaceOptions && (simple.equals("OptionsScreen")
-                || simple.equals("VideoSettingsScreen")
-                || simple.equals("SoundOptionsScreen")
-                || simple.equals("SkinCustomizationScreen")
-                || simple.equals("LanguageSelectScreen")
-                || simple.equals("AccessibilityOptionsScreen")
-                || simple.equals("ChatOptionsScreen")
-                || simple.equals("OnlineOptionsScreen")
-                || simple.equals("ControlsScreen")
-                || simple.equals("MouseSettingsScreen")
-                || simple.equals("KeyBindsScreen"))) return true;
-        if (config.replacePause && simple.equals("PauseScreen")) return true;
-        if (config.replaceWorldSelect && (simple.equals("SelectWorldScreen")
-                || simple.equals("CreateWorldScreen"))) return true;
-        if (config.replaceMultiplayer && (simple.equals("JoinMultiplayerScreen")
-                || simple.equals("ServerSelectionList"))) return true;
+        if (config.replaceOptions && (screen instanceof OptionsScreen
+                || screen instanceof VideoSettingsScreen
+                || screen instanceof SoundOptionsScreen
+                || screen instanceof SkinCustomizationScreen
+                || screen instanceof LanguageSelectScreen
+                || screen instanceof AccessibilityOptionsScreen
+                || screen instanceof ChatOptionsScreen
+                || screen instanceof OnlineOptionsScreen
+                || screen instanceof ControlsScreen
+                || screen instanceof MouseSettingsScreen
+                || screen instanceof KeyBindsScreen)) return true;
+
+        if (config.replacePause && screen instanceof PauseScreen) return true;
+        if (config.replaceWorldSelect && screen instanceof SelectWorldScreen) return true;
+        if (config.replaceMultiplayer && screen instanceof JoinMultiplayerScreen) return true;
+
         return false;
     }
 

@@ -9,7 +9,11 @@ import dev.md3ui.core.theme.Md3Scheme;
 import dev.md3ui.core.theme.Md3Tokens;
 import dev.md3ui.mod.Md3Config;
 import dev.md3ui.mod.Md3UI;
+import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.CycleButton;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 
 import java.util.ArrayList;
@@ -94,44 +98,73 @@ public final class AdoptedScreen {
         proxies.clear();
     }
 
+    /**
+     * Classify a widget by type, not by class name.
+     *
+     * <p>Name matching looks tempting and fails in production: Minecraft's
+     * classes carry intermediary names in a released jar, so
+     * {@code getSimpleName()} yields {@code class_4185} instead of
+     * {@code Button}. Real class references are remapped by Loom and work in
+     * both dev and production. Order matters, since {@code CycleButton} and
+     * {@code AbstractSliderButton} are both buttons.
+     */
     private static Kind classify(AbstractWidget w) {
-        String n = w.getClass().getSimpleName();
-        String full = w.getClass().getName();
-        if (n.contains("EditBox")) return Kind.TEXT_FIELD;
-        if (n.contains("Slider")) return Kind.SLIDER;
-        if (n.contains("CycleButton")) return Kind.CYCLE;
-        if (n.contains("Button")) return Kind.BUTTON;
-        if (n.contains("List") || n.contains("Selection")) return Kind.LIST;
-        // Anonymous subclasses of Button are common in vanilla option screens.
-        if (full.contains("Button")) return Kind.BUTTON;
+        if (w instanceof EditBox) return Kind.TEXT_FIELD;
+        if (w instanceof AbstractSliderButton) return Kind.SLIDER;
+        if (w instanceof CycleButton<?>) return Kind.CYCLE;
+        if (w instanceof Button) return Kind.BUTTON;
         return Kind.UNKNOWN;
     }
 
-    /** Slider progress 0..1, read reflectively; -1 when unavailable. */
-    private static double sliderValue(AbstractWidget w) {
-        for (String field : new String[] {"value", "f_93577_"}) {
-            try {
-                java.lang.reflect.Field f = findField(w.getClass(), field);
-                if (f == null) continue;
-                f.setAccessible(true);
-                Object v = f.get(w);
-                if (v instanceof Double) return (Double) v;
-                if (v instanceof Float) return ((Float) v).doubleValue();
-            } catch (ReflectiveOperationException | RuntimeException ignored) {
-                // fall through to the next candidate
-            }
+    /**
+     * Slider progress, 0..1.
+     *
+     * <p>{@code AbstractSliderButton.value} is a protected field, and MD3UI does
+     * not ship an access widener, so it is read reflectively. The field name is
+     * resolved through the remapped constant below rather than hardcoded: under
+     * intermediary mappings the name is not {@code value}, so a literal string
+     * would silently fail in production exactly like the class-name matching
+     * this replaced.
+     *
+     * @return progress in 0..1, or -1 when it could not be read, in which case
+     *         the caller draws a full track and relies on the widget's label,
+     *         which already contains the value in vanilla
+     */
+    private static double sliderValue(AbstractSliderButton slider) {
+        if (SLIDER_VALUE_FIELD == null) return -1;
+        try {
+            Object v = SLIDER_VALUE_FIELD.get(slider);
+            if (v instanceof Double d) return d;
+            if (v instanceof Float f) return f.doubleValue();
+        } catch (ReflectiveOperationException | RuntimeException ignored) {
+            // Fall through: a full track plus the label is an acceptable result.
         }
         return -1;
     }
 
-    private static java.lang.reflect.Field findField(Class<?> c, String name) {
-        while (c != null && c != Object.class) {
-            try {
-                return c.getDeclaredField(name);
-            } catch (NoSuchFieldException e) {
-                c = c.getSuperclass();
+    /**
+     * Located once at class load. {@code AbstractSliderButton} declares exactly
+     * one {@code double} field, which is the progress value, so it is found by
+     * type instead of by a name that mappings would rewrite.
+     */
+    private static final java.lang.reflect.Field SLIDER_VALUE_FIELD = findSliderValueField();
+
+    private static java.lang.reflect.Field findSliderValueField() {
+        for (java.lang.reflect.Field f : AbstractSliderButton.class.getDeclaredFields()) {
+            if (f.getType() == double.class && !java.lang.reflect.Modifier.isStatic(
+                    f.getModifiers())) {
+                try {
+                    f.setAccessible(true);
+                    return f;
+                } catch (RuntimeException e) {
+                    Md3UI.LOGGER.debug("[MD3UI] slider value field not accessible: {}",
+                            e.toString());
+                    return null;
+                }
             }
         }
+        Md3UI.LOGGER.debug("[MD3UI] no double field on AbstractSliderButton; "
+                + "sliders will render a full track");
         return null;
     }
 
@@ -270,7 +303,7 @@ public final class AdoptedScreen {
 
     private void drawSlider(Md3Canvas c, Md3Scheme s, Proxy p, float x, float y,
                             float w, float h, String label, boolean enabled, float overlay) {
-        double v = sliderValue(p.widget);
+        double v = p.widget instanceof AbstractSliderButton sb ? sliderValue(sb) : -1;
         // Vanilla sliders bake the value into their label, so an unreadable
         // field is not fatal: draw a full track and rely on the text.
         float frac = v < 0 ? 1f : (float) Math.max(0, Math.min(1, v));
